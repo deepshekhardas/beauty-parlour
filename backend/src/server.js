@@ -6,6 +6,11 @@ import morgan from 'morgan';
 import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { swaggerUi, specs } from './config/swagger.js';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
+import hpp from 'hpp';
+import compression from 'compression';
 
 import userRoutes from './routes/userRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
@@ -30,6 +35,22 @@ if (process.env.NODE_ENV === 'development') {
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+// Beast Mode: Compression
+app.use(compression());
+
+// Beast Mode: Security
+app.use(mongoSanitize());
+app.use(xss());
+app.use(hpp());
+
+// Beast Mode: Rate Limiting
+const limiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 10 minutes'
+});
+app.use('/api', limiter);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

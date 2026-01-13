@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Service from '../models/Service.js';
+import redisClient from '../config/redis.js';
 import Joi from 'joi';
 
 // Validation schema
@@ -21,7 +22,25 @@ const getServices = asyncHandler(async (req, res) => {
     // We'll handle that via query param or specific admin route if needed.
     // Start simple: return all active for public.
     const services = await Service.find({ is_active: true });
-    res.json(services);
+    try {
+        const cachedServices = await redisClient.get('services');
+        if (cachedServices) {
+            return res.json(JSON.parse(cachedServices));
+        }
+
+        // If admin, maybe show all? For now public shows active only.
+        // Actually, for admin we might want to see inactive ones too.
+        // We'll handle that via query param or specific admin route if needed.
+        // Start simple: return all active for public.
+        const services = await Service.find({ is_active: true }); // Still fetching active for public route
+        await redisClient.set('services', JSON.stringify(services), { EX: 3600 }); // Cache for 1 hour
+        res.json(services);
+    } catch (error) {
+        // If redis fails, still try to fetch from DB
+        console.error("Redis error:", error);
+        const services = await Service.find({ is_active: true });
+        res.json(services);
+    }
 });
 
 // @desc    Fetch all services (Admin)
@@ -44,6 +63,7 @@ const createService = asyncHandler(async (req, res) => {
 
     const service = new Service(req.body);
     const createdService = await service.save();
+    await redisClient.del('services');
     res.status(201).json(createdService);
 });
 
@@ -64,6 +84,7 @@ const updateService = asyncHandler(async (req, res) => {
         service.is_active = is_active !== undefined ? is_active : service.is_active;
 
         const updatedService = await service.save();
+        await redisClient.del('services');
         res.json(updatedService);
     } else {
         res.status(404);
@@ -81,6 +102,7 @@ const deleteService = asyncHandler(async (req, res) => {
         // Soft delete
         service.is_active = false;
         await service.save();
+        await redisClient.del('services');
         res.json({ message: 'Service deactivated' });
     } else {
         res.status(404);
