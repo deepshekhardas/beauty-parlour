@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+import { swaggerUi, specs } from './config/swagger.js';
 
 import userRoutes from './routes/userRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
@@ -33,6 +34,9 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.send('API is running...');
 });
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
