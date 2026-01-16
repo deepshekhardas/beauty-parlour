@@ -55,6 +55,11 @@ const appointmentSchema = new mongoose.Schema({
         currency: { type: String, default: 'INR' },
         status: { type: String, enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'], default: 'PENDING' },
         method: { type: String, enum: ['CASH', 'ONLINE'], default: 'CASH' }
+    },
+    // Track if reminder was sent
+    reminder_sent: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

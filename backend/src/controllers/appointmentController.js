@@ -3,6 +3,7 @@ import Appointment from '../models/Appointment.js';
 import Service from '../models/Service.js';
 import Staff from '../models/Staff.js';
 import sendEmail from '../utils/emailService.js';
+import { sendBookingConfirmation, sendAppointmentReminder } from '../utils/whatsappService.js';
 import Joi from 'joi';
 
 // Validation schema
@@ -77,8 +78,16 @@ const createAppointment = asyncHandler(async (req, res) => {
     // Send to Admin
     await sendEmail(process.env.ADMIN_EMAIL || 'admin@example.com', 'New Appointment Booking', `New appointment from ${customer_name}`, `<p>New appointment: <b>${customer_name}</b> (${customer_email}) for <b>${service.name}</b> on ${date} at ${time_slot}</p>`);
 
-    // In a real app we'd ask for customer email, but using fake one or param if available
-    // console.log(`New booking from ${customer_name} on ${date} ${time_slot}`);
+    // Send WhatsApp Confirmation
+    if (customer_phone) {
+        await sendBookingConfirmation(
+            customer_phone,
+            customer_name,
+            service.name,
+            date,
+            time_slot
+        );
+    }
 
     res.status(201).json(appointment);
 });
@@ -150,6 +159,17 @@ const updateAppointment = asyncHandler(async (req, res) => {
             body += `\nThank you,\nGlow & Grace`;
 
             await sendEmail(appointment.customer_email, subject, body, `<p>${body.replace(/\n/g, '<br>')}</p>`);
+
+            // Send WhatsApp notification for confirmed appointments
+            if (status === 'CONFIRMED' && appointment.customer_phone) {
+                await sendAppointmentReminder(
+                    appointment.customer_phone,
+                    appointment.customer_name,
+                    appointment.service_snapshot?.name || 'Service',
+                    appointment.date,
+                    appointment.time_slot
+                );
+            }
         }
 
         console.log(`Appointment ${appointment._id} marked as ${status}`);
