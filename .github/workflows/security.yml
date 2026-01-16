@@ -1,0 +1,62 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run weekly security scan
+    - cron: '0 0 * * 0'
+
+jobs:
+  # ========================================
+  # Dependency Vulnerability Check
+  # ========================================
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔐 Backend security audit
+        working-directory: backend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: 🔐 Frontend security audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # ========================================
+  # CodeQL Analysis
+  # ========================================
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔬 Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
