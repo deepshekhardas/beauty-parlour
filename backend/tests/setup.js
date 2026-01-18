@@ -1,24 +1,28 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Load test environment variables
 dotenv.config({ path: '.env.test' });
 
+let mongoServer;
+
 beforeAll(async () => {
-    // Connect to test database
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('✅ Test DB connected successfully');
-    } catch (error) {
-        console.error('❌ MongoDB Connection Failed!');
-        console.error('Please ensure MongoDB is running. See TESTING.md for setup instructions.');
-        console.error('Error:', error.message);
-        throw error;
-    }
+    // Start in-memory MongoDB instance
+    mongoServer = await MongoMemoryServer.create();
+    const mongoUri = mongoServer.getUri();
+
+    // Connect to the in-memory database
+    await mongoose.connect(mongoUri);
+    console.log('✅ Test DB connected successfully (In-Memory)');
 }, 30000);
 
 afterAll(async () => {
     // Cleanup and close connection
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
+    if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
+    }
+    if (mongoServer) {
+        await mongoServer.stop();
+    }
 }, 30000);
