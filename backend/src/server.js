@@ -19,6 +19,7 @@ import staffRoutes from './routes/staffRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import testimonialRoutes from './routes/testimonialRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 
@@ -74,6 +75,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

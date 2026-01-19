@@ -13,6 +13,7 @@ import ManageAppointments from './pages/ManageAppointments';
 import ManageStaff from './pages/ManageStaff';
 import ManageGallery from './pages/ManageGallery';
 import ManageTestimonials from './pages/ManageTestimonials';
+import Chatbot from './components/Chatbot';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <Chatbot />
     </Router>
   );
 }
