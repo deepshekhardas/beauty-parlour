@@ -19,7 +19,7 @@ services:
         sync: false
 
   # Frontend Static Site
-  - type: web
+  - type: static_site
     name: beauty-parlour-frontend
     env: static
     plan: free
