@@ -27,7 +27,3 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: beauty-parlour-backend
-property: port
